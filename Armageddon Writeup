@@ -1,0 +1,39 @@
+Enumeration:
+
+Found two ports using nmap
+22 ssh
+80 http
+
+Used gobuster to directory bust the webserver, found out drupal version 7.6
+
+Initial shell:
+
+Used drupalgeddon2 to get a foothold
+Then curl a reverse shell php code to upgrade shell a little bit
+
+
+Privilege Escalation:
+As web root/apache, I curl'd linpeas.sh to find a username and password combination for mysql. 
+Alternatively, using grep could also find strings of password in the files and reveal the same thing.
+
+mysql -u drupaluser --password=CQHEy@9M*m23gBVj -e "use drupal; show tables; SELECT * FROM user"
+
+The mysql command needed to be a one-liner due to the limited tty shell I was in. 
+I was able to get a salted hash, which happens to be a hash for drupal7.
+
+Cracking the hash:
+hashcat -m 7900 -a 0 '$DgL2gjv6ZtxBo6CdqZEyJuBphBmrCqIV6W97.oOsUf1xAhaadURt' rockyou.txt
+-->> booboo is the password
+
+cat /etc/passwd reveals user as brucetherealadmin
+
+Shell as brucetherealadmin:
+sudo -l 
+Sudo -l reveals that /usr/bin/snap install can be run without root passwd
+
+https://gtfobins.github.io/gtfobins/snap/#sudo
+
+instead of COMMAND=id, i reconfigured it to COMMAND='cat /root/root.txt'
+
+ez double flag
+
